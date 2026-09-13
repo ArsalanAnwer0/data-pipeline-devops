@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 
-from app.models import Job, JobCreateRequest
+from app.models import Job
 from app.processing import process_job
 from app.storage import job_store
 
@@ -10,8 +10,14 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
 @router.post("", response_model=Job, status_code=201)
-def create_job(payload: JobCreateRequest, background_tasks: BackgroundTasks) -> Job:
-    job = Job(input_text=payload.text)
+async def create_job(
+    background_tasks: BackgroundTasks, file: UploadFile = File(...)
+) -> Job:
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only .csv files are supported")
+
+    raw_bytes = await file.read()
+    job = Job(filename=file.filename, raw_content=raw_bytes.decode("utf-8"))
     job_store.create(job)
     background_tasks.add_task(process_job, job.id)
     return job

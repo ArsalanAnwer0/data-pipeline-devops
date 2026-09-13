@@ -13,19 +13,28 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
-class JobCreateRequest(BaseModel):
-    text: str = Field(..., min_length=1, description="Text payload to process")
+class ColumnSummary(BaseModel):
+    name: str
+    dtype: str
+    null_count: int
+    min: Optional[float] = None
+    max: Optional[float] = None
+    mean: Optional[float] = None
 
 
 class JobResult(BaseModel):
-    word_count: int
-    char_count: int
+    row_count: int
+    column_count: int
+    duplicate_row_count: int
+    columns: list[ColumnSummary]
+    validation_errors: list[str] = Field(default_factory=list)
 
 
 class Job(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     status: JobStatus = JobStatus.PENDING
-    input_text: str
+    filename: str
+    raw_content: str
     result: Optional[JobResult] = None
     error: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

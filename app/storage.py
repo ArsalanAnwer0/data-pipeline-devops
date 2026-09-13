@@ -30,5 +30,9 @@ class JobStore:
             self._jobs[job.id] = job
         return job
 
+    def clear(self) -> None:
+        with self._lock:
+            self._jobs.clear()
+
 
 job_store = JobStore()
