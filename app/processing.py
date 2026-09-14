@@ -46,14 +46,16 @@ def process_job(job_id: UUID) -> None:
         for col in df.columns:
             series = df[col]
             is_numeric = pd.api.types.is_numeric_dtype(series)
+            non_null = series.dropna()
+            has_numeric_data = is_numeric and not non_null.empty
             columns.append(
                 ColumnSummary(
                     name=col,
                     dtype=str(series.dtype),
                     null_count=int(series.isna().sum()),
-                    min=float(series.min()) if is_numeric else None,
-                    max=float(series.max()) if is_numeric else None,
-                    mean=float(series.mean()) if is_numeric else None,
+                    min=float(non_null.min()) if has_numeric_data else None,
+                    max=float(non_null.max()) if has_numeric_data else None,
+                    mean=float(non_null.mean()) if has_numeric_data else None,
                 )
             )
 
